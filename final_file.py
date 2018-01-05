@@ -74,15 +74,17 @@ def stir(totalTime,metric):
     stepper.start.stop()
 
 
-def getLocation(pin,mode=None):
+def getLocation(pin,mode=None,name=None):
   print("getting location")
   print("engaging" ,pin)
   getLocationEvent = threading.Event()
   time.sleep(1)
   if mode=="ingredient":
       wiringpi.digitalWrite(pin,1)
-      global currentIngredientPos
-      angle=ingredientPod[currentIngredientPos]
+      angle=ingredients[name]
+      print("dict angle ",angle)
+##      global currentIngredientPos
+##      angle=ingredientPod[currentIngredientPos]
       print("moving to angle",angle)
       currentIngredientPos+=1
       
@@ -96,8 +98,10 @@ def getLocation(pin,mode=None):
       wiringpi.digitalWrite(pin,1)
       GPIO.setup(dirPin1,GPIO.OUT)
       GPIO.setup(stepPin1,GPIO.OUT)
-      global currentSpicePos
-      angle=spicePod[currentSpicePos]
+      angle=spices[name]
+      print("dict angle ",angle)
+##      global currentSpicePos
+##      angle=spicePod[currentSpicePos]
       print("moving to angle",angle)
       currentSpicePos+=1
 
@@ -210,7 +214,7 @@ def ultrasonicDetection(ultrasonicDictionary):
       else:
           return True
 
-    
+#start process
 def startProcess(operationDictionary):
 ##        start.stepper.pos_zero
         for d in operationDictionary:
@@ -225,7 +229,7 @@ def startProcess(operationDictionary):
                     dispenseLiquid(oilPin,d['value'],d['metric'])
                 elif d['type']=='ingredient':
                     print('getting ingredient location')
-                    getLocation(ingredientPin,mode="ingredient")
+                    getLocation(ingredientPin,mode="ingredient",name=d['ingredient'])
                     dispenseIngredient('ingredient',ingredientPin,d['value'])
                 elif d['type']== 'spice':
                     print('getting spice location')
@@ -240,88 +244,63 @@ def startProcess(operationDictionary):
             time.sleep(1)
         print("curry Done")
                           
-#start process
-def weightMeasurement():
-    global j
-    finalWeight=load(1,'weight')
-##    if not finalWeight > 10:
-##        print(finalWeight)
-##    else:
-##        while True:
-##            print("weighing")
-##            if finalWeight<=5 and finalWeight < -10:
-##                return True
-##                break
-##            else:
-##                print("here is the weight ",finalWeight)
-##                time.sleep(1)
-    if j==0:
-        if finalWeight > 10 :
-            j+=1
-    else:
-        if finalWeight <=5 and finalWegiht >-5:
-                print("weight closed")
-                return True
-        else:
-            print("weight started")
-            return False
-        
-    
 
+ingredients={}
+spices={}
 def podDetect(Dict):
-##    for d in Dict['process']:
-##        try:
-##            if d['type']=='ingredient':
-##                print('weigh the ',d['name'], 'in weighing scale')
-##                while True:
-##                    if load(1,'weight') > 0:
-##                        print('place '+ d['type'] + ' in ingredient rack')
-##                        break
-##                while True:
-##                    pod.ingredientSetup(len(Dict['ingredients']))
-##                    if pod.trigStatus==True:
-##                        print("all ingredients inserted")
-##                        break
-##                
-##            elif d['type'] =='spice':
-##                print('place the ',d['name'], 'in spice rack')
-##                pod.spiceSetup(len(Dict['spices']))
-##                pod.trigStatus=False
-##                while True:
-##                  time.sleep(0.5)
-##                  if pod.trigStatus==True:
-##                      print("all spices inserted")
-##                      break
-##            
-##        except KeyError:
-##            pass
-##    pod.removeInterrupts()
-##    
-##    for ingredients in enumerate(Dict):
-        global ingredients
-        global spices
-        ingredients = Dict['ingredients']
-        spices = Dict['spices']
-        for i,name in enumerate(Dict['process']):
-            print(name)
-        for ingredient in Dict['ingredients']:
-            print("weigh the "+ str(ingredient)+ " in weight scale")
-            load(1,'tare')
+    for i in Dict.keys():
+        try:
+            for j in Dict[i]:
+                if j in Dict['ingredients']:
+                    print("weigh the "+ str(j)+ " in weight scale")
+                    x=0
+                    while True:
+                        if x==0:
+                            if load(1,'weight')>10:
+                                x=1
+                            else:
+                                pass
+                        else:
+                            if load(1,'weight')< 2:
+                                break
+                            else:
+                                continue
+                    print ("put {} in {} rack.".format(j,i))
+                    pod.trigStatus = False
+                    pod.ingredientSetup(1)
+                    while True:
+                        if pod.trigStatus==True:
+                            print("placed {} in the rack".format(j))
+                            ingredients[str(j)]=ingredientPod[0]
+                            print("ingredient Dict: ",ingredients)
+##                            del ingredientPod[-1]
+                            time.sleep(1)
+                            break
+                        else:
+                            continue
+##                    pod.removeInterrupts()
+                    
+                elif j in Dict['spices']: 
+                    print ("put {} in {} rack".format(j,i))
+                    pod.trigStatus=False
+                    pod.spiceSetup(1)
+                    while True:
+                        if pod.trigStatus==True:
+                            print("placed {} in the rack".format(j))
+                            spices[str(j)]=spicePod[0]
+                            print("spice Dict: ",spices)
+##                            del spicePod[-1]
+                            time.sleep(1)
+                            break
+                        else:
+                            continue
+                pod.removeInterrupts()            
+        except TypeError:
+            pass
+    print("all ingredients inserted")
+    pod.removeInterrupts() 
+    return True
 
-            j=0
-            while True:
-                if weightMeasurement()== True:
-                    print("place "+ str(ingredient) + " ingredient rack")
-                    break
-            if pod.ingredientSetup(len(Dict['ingredients'])):
-              print("all ingredients inserted")
-        for spices in Dict['spices']:
-            print("place "+ str(spices) + " in spice rack")
-            if pod.spiceSetup(len(Dict['ingredients'])):
-                print("all spices inserted")
-                break
-        pod.removeInterrupts()
-        return True
 
 ##operationDictionary={}
 # Read the recipe file

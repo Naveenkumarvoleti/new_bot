@@ -5,10 +5,11 @@ import random
 from pins import*
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
+global ingredientPod
+global spicePod
 ingredientPod=[]
 spicePod=[]
-trigStatus= False
-
+trigStatus=False
 ##def ledControll(dictionary):
 ##    numbers=range(6)
 ##    random.shuffle(numbers)
@@ -52,23 +53,23 @@ def ledControll(dictionary):
     
 def spiceSetup(podLen):
     try:
-        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',22,300),bouncetime=100)
-        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',26,60),bouncetime=100)
-        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',5,0),bouncetime=100)
-        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',6,120),bouncetime=100)
-        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',19,180),bouncetime=100)
-        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',17,240),bouncetime=100)
+        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',22,300),bouncetime=10)
+        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',26,60),bouncetime=10)
+        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',5,0),bouncetime=10)
+        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',6,120),bouncetime=10)
+        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',19,180),bouncetime=10)
+        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',17,240),bouncetime=10)
     except RuntimeError:
         pass
 
 def ingredientSetup(podLen):
     try:
-        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',22,300),bouncetime=100)
-        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',26,60),bouncetime=100)
-        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',5,0),bouncetime=100)
-        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',6,120),bouncetime=100)
-        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',19,180),bouncetime=100)
-        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',17,240),bouncetime=100)
+        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',22,300),bouncetime=10)
+        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',26,60),bouncetime=10)
+        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',5,0),bouncetime=10)
+        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',6,120),bouncetime=10)
+        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',19,180),bouncetime=10)
+        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',17,240),bouncetime=10)
     except RuntimeError:
         pass
 
@@ -91,20 +92,20 @@ def detection(podlen,mode,pin,angle):
             podDict=ingredientPod
         elif mode=='spice':
             podDict = spicePod
-        if not len(podDict) == podlen:
+        if not len(podDict) == 8:
             if GPIO.input(pin):
                 if angle in podDict:
                     print('already inserted')
                 else:
-                    podDict.append(angle)
-                    print('ingredient')
-                    print(podDict)
+                    podDict.insert(0,angle)
+                    print('inserted')
+                    if len(podDict)==podlen:
+                        global trigStatus
+                        trigStatus=True
+                        print(podDict)
+##                    print(podDict)
             else:
                 if not len(ingredientPod)== 0:
                     del podDict[-1]
-                    print(podDict)
+##                    print(podDict)
                     print("removed")
-        else:
-            print('all pods inserted : ',podDict)
-            trigStatus= True
-            print(trigStatus)
