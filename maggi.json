@@ -1,0 +1,86 @@
+{
+  "id"                : "maggi",
+  "name"              : "Maggi",
+  "no_of_ingredients" : 4,
+  "ingredients"       : ["onions","maggi"],
+  "spices"	      : ["maggi_masala"],
+  "no_of_operations"  : 11,
+  "operations"        : ["pre-heat","dispense","heat","simmer"],
+  "totalCookingTimeInMinutes" : 10,
+  "totalHandsOnTimeInMinutes" : 2,
+  "imageLinks": [],
+  "process": [
+      {
+        "operation"   : "heat",
+        "temperature" : 40
+      },
+      {
+        "metric"     : "ml",
+        "name"       : "oil",
+        "value"      : 10,
+        "operation"  : "dispense",
+        "type"       :"oil"
+      },
+      {
+        "operation"  : "dispense",
+        "ingredient" : "onions",
+        "value"      : 50,
+        "metric"     : "grams",
+        "type"       : "ingredient",
+	"name"	     : "onions"
+      },
+      {
+        "operation"  :"heat",
+        "temperature": 100
+      },
+      {
+        "operation" : "stir",
+        "time"      : 5,
+        "value"     : "sec"
+      },
+      {
+        "operation"  : "dispense",
+        "ingredient" : "water",
+        "value"      : 50,
+        "metric"     : "ml",
+        "type"       : "water"
+      },
+      {
+        "operation"  :"heat",
+        "temperature": 50
+      },
+      {
+        "operation" : "dispense",
+        "ingredient": "maggi",
+        "value"     : 100,
+        "metric"    : "grams",
+        "type"      :"ingredient"
+      },
+      {
+        "operation"    : "stir",
+        "time"         : 5,
+	   "value"	       : "sec"
+      },
+      {
+	"operation" : "dispense",
+        "ingredient":"maggi_masala",
+        "value" : 35,
+        "metric"   : "grams",
+        "name"     : "maggi masala",
+        "type"     : "spice"
+      },
+      {
+        "operation" :"stir",
+        "time"      : 5,
+        "value"     :"sec"
+      }
+    ],
+  "human_readable_steps": [
+    "pre-heat the pan to 100C",
+    "Pour oil in a bowl",
+    "Put onions and fry for 5 min",
+    "Pour water in a bowl and boil.",
+    "Put maggi in water.",
+    "Put maggi masala and cook on low for 2 min."
+    ]
+}
