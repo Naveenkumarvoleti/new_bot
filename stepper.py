@@ -8,7 +8,7 @@ GPIO.setup(dirPin1,GPIO.OUT)
 GPIO.setup(stepPin1,GPIO.OUT)
 class stepper():
 
-    def __init__(self,dir_pin,step_pin,spr,delay,sense_pin):
+    def __init__(self,dir_pin,step_pin,spr,delay,sense_pin=None):
         self.dir_pin= dir_pin
         self.step_pin= step_pin
         self.spr= spr
@@ -28,7 +28,7 @@ class stepper():
 
     def forward(self,spr):
         GPIO.output(self.dir_pin, CCW)
-        for x in range(int(round(spr))):
+        for x in range(int(round(spr)) if type(spr)==float else int(spr)):
 ##            print("step: ",x)
             GPIO.output(self.step_pin, GPIO.HIGH)
             sleep(self.delay)
@@ -39,7 +39,7 @@ class stepper():
 
     def backward(self,spr):
         GPIO.output(self.dir_pin, CW)
-        for x in range(int(round(spr))):
+        for x in range(int(round(spr)) if type(spr)==float else int(spr)):
 ##            print("step: ",x)
             GPIO.output(self.step_pin, GPIO.HIGH)
             sleep(self.delay)
@@ -88,5 +88,5 @@ class stepper():
         self.stop()
         return True
             
-start = stepper(dirPin,stepPin,200,defaultStepSpeed,stepperSensor)
-start1 = stepper(dirPin1,stepPin1,200,defaultStepSpeed,stepperSensor)
+##start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
+##start1 = stepper(dirPin1,stepPin1,200,defaultStepSpeed,sense_pin=stepperSensor)

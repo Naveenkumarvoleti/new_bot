@@ -37,3 +37,6 @@ val = hx.get_weight(5)
 ##            hx.power_down()
 ##            hx.power_up()
 ##            time.sleep(0.5)
+##while True:
+##    print(hx.get_weight(5))
+##    time.sleep(0.1)

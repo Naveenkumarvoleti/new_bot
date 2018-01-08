@@ -3,7 +3,6 @@ from time import sleep
 from pins import *
 pin_base = 65
 i2c_addr = 0x20
-import RPi.GPIO as GPIO
 ##defaultStepSpeed=0.0028
 ##stepperSensor=5
 ##wiringpi.wiringPiSetup()
@@ -25,10 +24,10 @@ class stepper():
         self.kill = False
         
     def __setup_gpio__(self):
-        GPIO.setmode(GPIO.BCM)
+##        GPIO.setmode(GPIO.BCM)
         wiringpi.pinMode(self.dir_pin,1)
         wiringpi.pinMode(self.step_pin,1)
-        GPIO.setup(self.sense_pin, GPIO.IN)
+##        GPIO.setup(self.dir_pin, GPIO.OUT)
 ##        GPIO.setup(self.step_pin, GPIO.OUT)
 ##        wiringpi.pinMode(self.sense_pin,0)
 
@@ -88,7 +87,7 @@ class stepper():
     
     def pos_zero(self):
         print("moving to start pos")
-        while not GPIO.input(self.sense_pin)==True:
+        while not wiringpi.digitalRead(self.sense_pin)==True:
             self.backward(self.spr)
 ##        else:
         self.stop()

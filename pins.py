@@ -13,8 +13,8 @@ config = SafeConfigParser()
 config.read('config.ini')
 
 
-spicePod=[45,90,135,180,225,270,315,360]
-ingredientPod=[60,120,180,240,300,360]
+##spicePod=[45,90,135,180,225,270,315,360]
+##ingredientPod=[60,120,180,240,300,360]
 
 incrementPin=71
 decrementPin=70
@@ -48,7 +48,7 @@ stepPin=68
 dirPin1=80
 stepPin1=79
 
-oilSensor=13
+oilSensor=5
 waterSensor=13
 
 
@@ -78,8 +78,8 @@ for pin in out_pins:
     GPIO.setup(int(pin),GPIO.OUT)
 for pin in in_pins:
     GPIO.setup(int(pin),GPIO.IN)
-##for pin in outPinsWiringpi:
-##    wiringpi.pinMode(pin,1)
+for pin in outPinsWiringpi:
+    wiringpi.pinMode(pin,1)
     
 ##stirSpeed=0.006
 
@@ -87,4 +87,5 @@ for pin in in_pins:
 ##with open('data.json')as f:
 ##    data=json.loads(f.read())
 ##    print(f)
-
+##wiringpi.pinMode(stirPin,1)
+##wiringpi.digitalWrite(stirPin,0)

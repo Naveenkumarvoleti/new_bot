@@ -25,6 +25,7 @@ f4 = Frame(root)
 f5 = Frame(root)
 f6 = Frame(root)
 f7 = Frame(root)
+f8 = Frame(root)
 
 ##LARGE_FONT= config.get('font', 'LARGE_FONT')
 ##NORM_FONT = config.get('font', 'NORM_FONT')

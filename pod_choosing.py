@@ -73,11 +73,20 @@ def ingredientSetup(podLen):
     except RuntimeError:
         pass
 
+##def removeInterrupts():
+##    for (p,value),(p1,value1) in zip(spiceDict.items(), ingredientDict.items()):
+##        GPIO.remove_event_detect(p)
+##        GPIO.remove_event_detect(p1)
+
 def removeInterrupts():
-    for (p,value),(p1,value1) in zip(spiceDict.items(), ingredientDict.items()):
-        GPIO.remove_event_detect(p)
-        GPIO.remove_event_detect(p1)
-        
+        GPIO.remove_event_detect(20)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',20,60),bouncetime=300)
+        GPIO.remove_event_detect(16)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',16,120),bouncetime=300)
+        GPIO.remove_event_detect(12)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',12,180),bouncetime=300)
+        GPIO.remove_event_detect(25)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',25,240),bouncetime=300)
+        GPIO.remove_event_detect(24)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',24,300),bouncetime=300)
+        GPIO.remove_event_detect(23)#, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',23,360),bouncetime=300)
+    
+    
 def trigger():
     if trigStatus==True:
         return True
@@ -102,10 +111,10 @@ def detection(podlen,mode,pin,angle):
                     if len(podDict)==podlen:
                         global trigStatus
                         trigStatus=True
-##                        print(podDict)
+                        print(podDict)
+                    trigStatus=True
 ##                    print(podDict)
-            else:
-                if not len(ingredientPod)== 0:
-##                    del podDict[-1]
-##                    print(podDict)
-                    print("removed")
+##            elif not len(ingredientPod)== 0:
+####                    del podDict[-1]
+####                    print(podDict)
+##                    print("removed")
