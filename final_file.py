@@ -3,8 +3,9 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 from pins import*
 import pod_choosing as pod
-import led,stepper,Test
-##from dsb18_temp import measurement
+import led,Test
+from stepper_gpio_expander import stepper
+from dsb18_temp import measurement
 import sys
 import json
 from time import sleep
@@ -15,16 +16,20 @@ from ultra import ultrasonic
 global index
 global value
 import time
+from numpy import mean
 import os.path
 from loadcell import *
 from progressbar import progress
 import induction_controll_relay
-from gui import*
+
 global j
 pumpSpeed = 100 #ml/min
-currentIngredientPos=0
-currentSpicePos=0
+##currentIngredientPos=0
+##currentSpicePos=0
+##                          
 
+ingredients={}
+spices={}
 lock=threading.Lock()
 
 # Switching to high and stay for given time and switch to low
@@ -61,6 +66,9 @@ def dispenseLiquid(pinNumber,quantity,metric):
 
 # Stirring
 def stir(totalTime,metric):
+    wiringpi.digitalWrite(stirPin,1)
+    time.sleep(0.5)
+    start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
     if metric == "min":
         finalTime = totalTime*60
         print(finalTime)
@@ -70,70 +78,87 @@ def stir(totalTime,metric):
     closeTime=round(time.time())+finalTime
     print(round(closeTime))
     while round(time.time()) < closeTime:
-        stepper.start.forward(1)
-    stepper.start.stop()
+        start.forward(1)
+    start.stop()
+    wiringpi.digitalWrite(stirPin,0)
+    time.sleep(0.5)
 
 
 def getLocation(pin,mode=None,name=None):
+  start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
+  start1 = stepper(dirPin1,stepPin1,200,defaultStepSpeed,sense_pin=stepperSensor)
   print("getting location")
   print("engaging" ,pin)
   getLocationEvent = threading.Event()
   time.sleep(1)
   if mode=="ingredient":
       wiringpi.digitalWrite(pin,1)
+      time.sleep(0.5)
       angle=ingredients[name]
       print("dict angle ",angle)
 ##      global currentIngredientPos
 ##      angle=ingredientPod[currentIngredientPos]
       print("moving to angle",angle)
-      currentIngredientPos+=1
+##      currentIngredientPos+=1
       
-      if stepper.start.move_to(angle):
-          print("disengaging" ,pin)
+      if start.move_to(angle):
+          print("dis engaging" ,pin)
           wiringpi.digitalWrite(pin,0)
           print("reached location at", angle)
-
       
   elif mode=="spice":
       wiringpi.digitalWrite(pin,1)
-      GPIO.setup(dirPin1,GPIO.OUT)
-      GPIO.setup(stepPin1,GPIO.OUT)
+      time.sleep(0.5)
+##      GPIO.setup(dirPin1,GPIO.OUT)
+##      GPIO.setup(stepPin1,GPIO.OUT)
       angle=spices[name]
       print("dict angle ",angle)
 ##      global currentSpicePos
 ##      angle=spicePod[currentSpicePos]
       print("moving to angle",angle)
-      currentSpicePos+=1
+##      currentSpicePos+=1
 
-      if stepper.start1.move_to(angle):
-          print("disengaging" ,pin)
+      if start1.move_to(angle):
+          print("dis engaging" ,pin)
           wiringpi.digitalWrite(pin,0)
           print("reached location at", angle)
       
   else:
       print("mode is not specified")
+  time.sleep(0.5)
 
 
 #closeCookingLid
-def closeCookingLid(lidPos):
-  stepper.start.stop()
+def closeCookingLid(lidPos,liftSpeed=defaultStepSpeed):
+  start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
+  start.stop()
   print("closing lid")
 ##  gpio_high_low(lidPin,time)
-  if stepper.start.forward(lidPos):
-      stepper.start.stop()
+  wiringpi.digitalWrite(lidPin,1)
+  time.sleep(0.5)
+  if start.forward(lidPos):
+      start.stop()
       print('lid closed')
+  wiringpi.digitalWrite(lidPin,0)
+  time.sleep(0.5)
   return True
 
 
 #liftCookingLid
-def liftCookingLid(lidPos):
-  stepper.start.stop()
+def liftCookingLid(lidPos,liftSpeed=defaultStepSpeed):
+  start = stepper(dirPin,stepPin,200,liftSpeed,sense_pin=stepperSensor)
+  start.stop()
 ##  gpio_high_low(lidPin,time)
-  if not GPIO.input(liftStop):
+  wiringpi.digitalWrite(lidPin,1)
+  time.sleep(0.5)
+  if not GPIO.input(lidSensor):
       print("lifting lid")
-      stepper.start.backward(lidPos)
+##      start=stepper(delay=liftSpeed)
+      start.backward(lidPos)
   print("lid opened")
-  stepper.start.stop()
+  start.stop()
+  wiringpi.digitalWrite(lidPin,0)
+  time.sleep(0.5)
   return True
 
 ## get weight
@@ -156,24 +181,30 @@ def load(loadcell,mode):
     
 ### Dispensing Ingredients
 def dispenseIngredient(mode,dispensePin,quantity):
+    start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
+    start1 = stepper(dirPin1,stepPin1,200,defaultStepSpeed,sense_pin=stepperSensor)
     if mode == 'spice':
         liftCookingLid(dispensePos)
         print("dispencing spice\n")
         load(1,'tare')
         while True:
-            GPIO.setup(dirPin1,GPIO.OUT)
-            GPIO.setup(stepPin1,GPIO.OUT)
-            stepper.start1.forward(50)
+##            GPIO.setup(dirPin1,GPIO.OUT)
+##            GPIO.setup(stepPin1,GPIO.OUT)
+            start1.forward(50)
             if load(1,'weight') > quantity:
                 print("weight reached")
-                stepper.start1.stop()
+                start1.stop()
                 break
+        print("cleaning the suite")
+        wiringpi.digitalWrite(cleaningPin,1)
+        time.sleep(2)
+        wiringpi.digitalWrite(cleaningPin,0)
     elif mode == 'ingredient':
         wiringpi.digitalWrite(dispensePin,1)
         print("dispencing ingredient\n")
         liftCookingLid(dispensePos)
         time.sleep(2)
-        wiringpi.digitalWrite(dispensePin,1)
+        wiringpi.digitalWrite(dispensePin,0)
 ##        load(1,'tare')
 ##        while True:
 ##            if load(1,'weight') > quantity:
@@ -203,16 +234,6 @@ def inductor(temperature=0): # hardware control mode
 def startBoth(file,riceType):
     rice=threading.Thread(target=cookRice,args=(riceType,)).start()
     readRecipe(file)
-    
-def ultrasonicDetection(ultrasonicDictionary):
-  print("sensing")
-  for u in ultrasonicDictionary: # including ultrasonic dictionary
-      reading=ultrasonic(u)
-      if reading > maxOilLevel and reading < minOilLevel:
-          print("sensor failed or fill the oil container")
-          print(reading)
-      else:
-          return True
 
 #start process
 def startProcess(operationDictionary):
@@ -234,7 +255,7 @@ def startProcess(operationDictionary):
                 elif d['type']== 'spice':
                     print('getting spice location')
                     getLocation(spicePin,mode="spice")
-                    dispenseIngredient('spice',spicePin,d['value'])
+                    dispenseIngredient('spice',spicePin,d['value'],name=d['ingredient'])
                 elif d['type']== 'water':
                     print('dispencing water')
                     dispenseLiquid(waterPin,d['value'],d['metric'])
@@ -243,52 +264,131 @@ def startProcess(operationDictionary):
                 stir(d['time'],d['value'])
             time.sleep(1)
         print("curry Done")
-                          
+        
+diagnosticsDict=[]
 
-ingredients={}
-spices={}
+class Diagnostics(object):
+    # all positions setup
+    # oil and water levels
+    # temperature setting
+    # 2 loadcells reset
+    # cooking lid position
+    # 
+    def __iniit__(self):
+        self.cookingLidPos=None
+        self.oilSensor=oilSensor
+        self.waterSensor=waterSensor
+        self.tempSensor=tempSensor
+        self.cookingLid=None
+        self.cookingLid()
+        self.senLevel(self.oilSensor)
+        self.senlevel(self.WaterSensor)
+        self.ingredientRack()
+
+    def slowClose(self,stepSpeed=retractionSpeed):
+        print("getting default lid Position")
+        closeCookingLid(defaultLidPos,stepSpeed)
+        
+    def cookingLid(self,stepSpeed=retractionSpeed):
+        print("resetting lid position")
+        while not self.cookingLid==0:
+            start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=lidSensor)
+            if start.pos_zero()== True:
+##                self.cookingLidPos=liftPos
+                self.slowClose(stepSpeed)
+                break
+            else:
+                continue
+    def ingredientRack(self,stepSpeed=defaultStepSpeed):
+        wiringpi.digitalWrite(ingredientPin,1)
+##        start=stepper(delay=stepSpeed)
+        print("resetting ingredient Rack")
+        start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=stepperSensor)
+        if  start.pos_zero()== True:
+            print("endstop triggered")
+            print("stepper at start Pos")
+        wiringpi.digitalWrite(ingredientPin,0)
+        
+    def senLevel(self,senPin):
+        for x in range(10):
+            value=round(ultrasonic(senPin))
+            senDict=[]
+            senDict.append(value)
+        if mean(senDict) > 1:
+            print("sensor Working")
+            return True
+        else:
+            print("sensor is not working")
+            return False
+            
+    def tempSense(self):
+        data=measurement()
+        return data
+        print("current Temp: {}".format(data))
+
+    def diag(self):
+        if self.tempSense()==True:
+            diagnosticsDict.append(1)
+        if self.senLevel(self.oilSensor):
+            diagnosticsDict.append(1)
+        else:
+            print(" oil level Sensor is not Working")
+        if self.senLevel(self.waterSensor):
+            diagnosticsDict.append(1)
+        else:
+            print("water level sensor is not working")
+        
+    
+
 def podDetect(Dict):
     for i in Dict.keys():
         try:
             for j in Dict[i]:
                 if j in Dict['ingredients']:
-                    print("weigh the "+ str(j)+ " in weight scale")
-                    x=0
-                    while True:
-                        if x==0:
-                            if load(1,'weight')>10:
-                                x=1
+##                    while True:
+                        choice=raw_input("Do you want to weigh {}. choose: y/n: ".format(j))
+                        if choice=='y':
+                            print("weigh the "+ str(j)+ " in weight scale")
+                            x=0
+                            if x==0:
+                                if load(1,'weight')>10:
+                                    x=1
+                                else:
+                                    pass
                             else:
-                                pass
-                        else:
-                            if load(1,'weight')< 2:
+                                if load(1,'weight')< 2:
+                                    break
+                                else:
+                                    continue
+                        elif choice=='n':
+                            print ("put {} in {} rack.".format(j,i))
+                            pod.trigStatus = False
+                            pod.ingredientSetup(1)
+                        
+                        while True:
+                            if pod.trigStatus==True:
+                                print('placed {} in the rack'.format(j))
+                                ingredients[str(j)]=ingredientPod[0]
+                                print('ingredient Dict: ',ingredients)
+    ##                            del ingredientPod[-1]
+                                time.sleep(1)
                                 break
                             else:
                                 continue
-                    print ("put {} in {} rack.".format(j,i))
-                    pod.trigStatus = False
-                    pod.ingredientSetup(1)
-                    while True:
-                        if pod.trigStatus==True:
-                            print("placed {} in the rack".format(j))
-                            ingredients[str(j)]=ingredientPod[0]
-                            print("ingredient Dict: ",ingredients)
-##                            del ingredientPod[-1]
-                            time.sleep(1)
-                            break
-                        else:
-                            continue
-##                    pod.removeInterrupts()
+##                        else:
+##                            print("choose your option")
+####                            continue
+                        pod.removeInterrupts()
                     
                 elif j in Dict['spices']: 
-                    print ("put {} in {} rack".format(j,i))
+                    print ("put {} in the {} rack".format(j,i))
                     pod.trigStatus=False
                     pod.spiceSetup(1)
                     while True:
                         if pod.trigStatus==True:
-                            print("placed {} in the rack".format(j))
+                            print('placed {} in the rack'.format(j))
                             spices[str(j)]=spicePod[0]
-                            print("spice Dict: ",spices)
+                            print('spice Dict: ',spices)
 ##                            del spicePod[-1]
                             time.sleep(1)
                             break
@@ -302,7 +402,6 @@ def podDetect(Dict):
     return True
 
 
-##operationDictionary={}
 # Read the recipe file
 def readRecipe(file,delay):
     time.sleep(delay)
@@ -310,7 +409,7 @@ def readRecipe(file,delay):
         recipeData =json.loads(f.read())
         try:
             operationDictionary=dict(recipeData.items())
-            print(operationDictionary)
+            print("making recipe {}".format(operationDictionary['name']))
         except AttributeError:
             operationDictionary=dict(recipeData.iteritems())
 ##            print(operationDictionary)
@@ -331,5 +430,26 @@ def readRecipe(file,delay):
                 startP.start()
     
 if __name__ == '__main__':
-    level=threading.Timer(10.0,ultrasonicDetection,args=(ultrasonicDictionary,)).start()
+    print("Diagnostics Running")
+    run=Diagnostics()
+    run.cookingLid()
+    run.ingredientRack()
+    print("diagnostics Done")
+    
+    while True:
+        selection=raw_input("Do you want to start(y/n): ")
+        if selection=="y":
+           from gui import*
+        elif selection=="n":
+            print("skipped")
+        else:
+            print("choose right option")
+            continue
+##    sensorTest=threading.Thread(10.0,run.diag()).start()
+##    if mean(diagnosticsDict)==1:
+##        print("everyThing Working Fine")
+##    else:
+##        print("operation paused")
+    
+##    level=threading.Timer(10.0,ultrasonicDetection,args=(ultrasonicDictionary,)).start()
 ##    riceMaker=threading.Thread(target=cookRice,args=(temperature,delay,ricePin,riceWarmPin))

@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 GPIO.setmode(GPIO.BCM)
-TRIG = 13
+TRIG = 6
 retries=10
 data=[]
 
@@ -11,6 +11,7 @@ def ultrasonic(ECHO):
     GPIO.output(TRIG, True)
     time.sleep(0.00001)
     GPIO.output(TRIG, False)
+    
     while GPIO.input(ECHO)==0:
       pulse_start = time.time()
       
@@ -39,4 +40,3 @@ def errorfinder(data):
     else:
         pass
     print(distance)
-    

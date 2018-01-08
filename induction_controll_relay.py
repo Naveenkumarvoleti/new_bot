@@ -1,6 +1,5 @@
 import time
-import RPi.GPIO as GPIO
-##from pins import*
+##import RPi.GPIO as GPIO
 import threading
 from threading import Thread, Event
 from pins import *
@@ -20,11 +19,11 @@ class induction(object):
         global powerState
         global warmState
     def __setup_gpio__(self):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(incrementPin,GPIO.OUT)
-        GPIO.setup(decrementPin,GPIO.OUT)
-        GPIO.setup(onOffPin,GPIO.OUT)
-        GPIO.setup(warmPin,GPIO.OUT)
+##        GPIO.setmode(GPIO.BCM)
+        wiringpi.pinMode(incrementPin,1)
+        wiringpi.pinMode(decrementPin,1)
+        wiringpi.pinMode(onOffPin,1)
+        wiringpi.pinMode(warmPin,1)
         
     def power(self,mode):
         global powerState
@@ -44,9 +43,9 @@ class induction(object):
                print(" already powered off") 
             
     def highLow(self,pinNumber):
-        GPIO.output(pinNumber,True)
+        wiringpi.digitalWrite(pinNumber,True)
         time.sleep(0.1)
-        GPIO.output(pinNumber,False)
+        wiringpi.digitalWrite(pinNumber,False)
         time.sleep(0.1)
         
     def fullHeat(self):
@@ -68,7 +67,7 @@ class induction(object):
         global warmState
         if mode=="on":
             if not warmState== True:
-                GPIO.output(warmPin,True)
+                wiringpi.digitalWrite(warmPin,True)
                 warmState= not WarmState
         elif mode == "off":
             self.power("off")

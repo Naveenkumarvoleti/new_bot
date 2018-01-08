@@ -53,23 +53,23 @@ def ledControll(dictionary):
     
 def spiceSetup(podLen):
     try:
-        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',22,300),bouncetime=10)
-        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',26,60),bouncetime=10)
-        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',5,0),bouncetime=10)
-        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',6,120),bouncetime=10)
-        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',19,180),bouncetime=10)
-        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',17,240),bouncetime=10)
+        GPIO.add_event_detect(20, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',20,60),bouncetime=300)
+        GPIO.add_event_detect(16, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',16,120),bouncetime=300)
+        GPIO.add_event_detect(12, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',12,180),bouncetime=300)
+        GPIO.add_event_detect(25, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',25,240),bouncetime=300)
+        GPIO.add_event_detect(24, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',24,300),bouncetime=300)
+        GPIO.add_event_detect(23, GPIO.BOTH, callback=lambda x :detection(podLen,'spice',23,360),bouncetime=300)
     except RuntimeError:
         pass
 
 def ingredientSetup(podLen):
     try:
-        GPIO.add_event_detect(22, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',22,300),bouncetime=10)
-        GPIO.add_event_detect(26, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',26,60),bouncetime=10)
-        GPIO.add_event_detect(5, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',5,0),bouncetime=10)
-        GPIO.add_event_detect(6, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',6,120),bouncetime=10)
-        GPIO.add_event_detect(19, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',19,180),bouncetime=10)
-        GPIO.add_event_detect(17, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',17,240),bouncetime=10)
+        GPIO.add_event_detect(20, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',20,60),bouncetime=300)
+        GPIO.add_event_detect(16, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',16,120),bouncetime=300)
+        GPIO.add_event_detect(12, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',12,180),bouncetime=300)
+        GPIO.add_event_detect(25, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',25,240),bouncetime=300)
+        GPIO.add_event_detect(24, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',24,300),bouncetime=300)
+        GPIO.add_event_detect(23, GPIO.BOTH, callback=lambda x :detection(podLen,'ingredient',23,360),bouncetime=300)
     except RuntimeError:
         pass
 
@@ -98,14 +98,14 @@ def detection(podlen,mode,pin,angle):
                     print('already inserted')
                 else:
                     podDict.insert(0,angle)
-                    print('inserted')
+##                    print('inserted')
                     if len(podDict)==podlen:
                         global trigStatus
                         trigStatus=True
-                        print(podDict)
+##                        print(podDict)
 ##                    print(podDict)
             else:
                 if not len(ingredientPod)== 0:
-                    del podDict[-1]
+##                    del podDict[-1]
 ##                    print(podDict)
                     print("removed")
