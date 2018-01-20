@@ -3,7 +3,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 from pins import*
 import pod_choosing as pod
-import led,Test
+import led
 from stepper_gpio_expander import stepper
 from dsb18_temp import measurement
 import sys
@@ -20,9 +20,13 @@ from numpy import mean
 import os.path
 from loadcell import *
 from progressbar import progress
+from gui import progress
 import induction_controll_relay
-
+from gui import *
+##from gui import progress
+##from gui import button
 global j
+
 pumpSpeed = 100 #ml/min
 ##currentIngredientPos=0
 ##currentSpicePos=0
@@ -31,7 +35,9 @@ pumpSpeed = 100 #ml/min
 ingredients={}
 spices={}
 lock=threading.Lock()
-
+        
+diagnosticsDict=[]
+senDict=[]
 # Switching to high and stay for given time and switch to low
 ##def gpio_high_low(pinNumber, timeInSeconds):
 ##    GPIO.output(pinNumber,True)
@@ -199,12 +205,15 @@ def dispenseIngredient(mode,dispensePin,quantity):
         wiringpi.digitalWrite(cleaningPin,1)
         time.sleep(2)
         wiringpi.digitalWrite(cleaningPin,0)
+        
     elif mode == 'ingredient':
-        wiringpi.digitalWrite(dispensePin,1)
+        wiringpi.digitalWrite(flap1Pin,1)
+        wiringpi.digitalWrite(flap2Pin,1)
         print("dispencing ingredient\n")
         liftCookingLid(dispensePos)
         time.sleep(2)
-        wiringpi.digitalWrite(dispensePin,0)
+        wiringpi.digitalWrite(flap2Pin,0)
+        wiringpi.digitalWrite(flap1Pin,0)
 ##        load(1,'tare')
 ##        while True:
 ##            if load(1,'weight') > quantity:
@@ -226,13 +235,29 @@ def isThreadAlive(name):
 def inductor(temperature=0): # hardware control mode
     inductionControll= induction_controll_relay.induction()
     if temperature == 0:
-        inductionControll.tempControll("off")
+        inductionControll.power("off")
     elif temperature == 1:
-        inductionControll.tempControll("on")
+        inductionControll.power("on")
     elif temperature > 1:
         inductionControll.tempControll(temperature)
     return True
-        
+
+
+# Rice cooker
+def cookRice(riceType):
+  time.sleep(delay)
+  print ("cooking Rice")
+  while (measurement(temperature)) <= 100:
+##    GPIO.output(ricePin,True)
+      wiringpi.digitalWrite(ricePin,1)
+##  GPIO.output(ricePin,False)
+##  GPIO.output(riceWarmPin,True)
+  wiringpi.digitalWrite(ricePin,0)
+  wiringpi.digitalWrite(WarmPin,1)
+  print("rice cooking done")
+  print("warm mode active")
+
+  
 def startBoth(file,riceType):
     rice=threading.Thread(target=cookRice,args=(riceType,)).start()
     readRecipe(file)
@@ -268,9 +293,7 @@ def startProcess(operationDictionary):
             time.sleep(1)
         print("curry Done")
         inductor_run = threading.Thread(target= inductor,args=(0,)).start()      
-        
-diagnosticsDict=[]
-senDict=[]
+
 class Diagnostics():
     # all positions setup
     # oil and water levels
@@ -280,6 +303,7 @@ class Diagnostics():
     #
     def __init__(self):
         self.cookingLidPos=None
+        
 ##        self.senPin=sensor
 ##        self.waterSensor=waterSensor
 ##        self.tempSensor=tempSensor
@@ -294,12 +318,15 @@ class Diagnostics():
         closeCookingLid(defaultLidPos,stepSpeed)
         
     def cookingLid(self,stepSpeed=retractionSpeed):
+        wiringpi.digitalWrite(lidPin,1)
         print("resetting lid position")
         while not self.cookingLid==0:
-            start = stepper(dirPin,stepPin,200,defaultStepSpeed,sense_pin=lidSensor)
+            start = stepper(dirPin,stepPin,200,stepSpeed,sense_pin=lidSensor)
             if start.pos_zero()== True:
+                print("endstop triggered")
 ##                self.cookingLidPos=liftPos
                 self.slowClose(stepSpeed)
+                wiringpi.digitalWrite(lidPin,0)
                 break
             else:
                 continue
@@ -314,28 +341,46 @@ class Diagnostics():
         wiringpi.digitalWrite(ingredientPin,0)
         
     def senLevel(self,senPin,senLevel=None):
+##        currentTime=time.time()%60
+##        while not time.time()%60 == currentTime:
         for x in range(10):
             value=ultrasonic(senPin,senLevel)
+            if value==True:
+                print("{} level is good".format("oil" if senPin==5 else "water"))
+                return True
+            else:
+                print("{} is not enough ".format("oil" if senPin==5 else "water"))
+                return False
+                break
             senDict.append(value)
 ##        print(senDict)
-        if mean(senDict) > 1:
-            print("{} sensor Working".format(senPin))
+        try:
+            if mean(senDict) > 1:
+                print("{} sensor is Working".format("oilSensor" if senPin==5 else "waterSensor"))
+                del senDict[:]
+                return True
+            else:
+                print("{} sensor is not working".format(senPin))
+                del senDict[:]
+                return True
+        except RuntimeWarning:
             return True
-        else:
-            print("{} sensor is not working".format(sensPin))
-            return False
-            
+          
     def tempSense(self):
         data=measurement()
         for i in range(10):
+##            time.sleep(0.5)
             senDict.append(data)
-            print(data)
-        if mean(senDict)>float(0):
+##            print("current temperature is {}".format(data))
+##        print(senDict)
+##        print(mean(senDict))
+        if mean(senDict) > float(0):
             print("current Temp: {}".format(data))
             del senDict[:]
             return True
         else:
             print("temp sensor not working")
+            del senDict[:]
             return False
 
     def diag(self):
@@ -346,25 +391,28 @@ class Diagnostics():
             diagnosticsDict.append(1)
         else:
             diagnosticsDict.append(2)
-            
         if self.senLevel(oilSensor,minOilLevel):
             diagnosticsDict.append(1)
         else:
-            print(" oil level Sensor is not Working")
+##            print(" oil level Sensor is not Working")
             diagnosticsDict.append(2)
             
         if self.senLevel(waterSensor,minWaterLevel):
             diagnosticsDict.append(1)
         else:
-            print("water level sensor is not working")
+##            print("water level sensor is not working")
             diagnosticsDict.append(2)
             
         if mean(diagnosticsDict)==1:
             print(mean(diagnosticsDict))
             print("All sensors are working fine")
+            del diagnosticsDict[:]
             return True
         else:
+            print("process Stopped")
+            del diagnosticsDict[:]
             return False
+        return True
         
     
 
@@ -372,6 +420,7 @@ def podDetect(Dict):
     pod.removeInterrupts()
     for i in Dict.keys():
         try:
+##            raise_frame(f7)
             for j in Dict[i]:
                 if j in Dict['ingredients']:
                         choice=raw_input("Do you want to weigh {}. choose: y/n: ".format(j))
@@ -434,6 +483,7 @@ def podDetect(Dict):
 # Read the recipe file
 def readRecipe(file,delay):
     time.sleep(delay)
+    progress(10)
     with open(file) as f:
         recipeData =json.loads(f.read())
         try:
@@ -442,13 +492,16 @@ def readRecipe(file,delay):
         except AttributeError:
             operationDictionary=dict(recipeData.iteritems())
 ##            print(operationDictionary)
-        print("no of operations to be done :" + str(operationDictionary['no_of_operations']))
+        print("\nno of operations to be done :" + str(operationDictionary['no_of_operations']))
         print(" ")
         global operations
         operations=operationDictionary['no_of_operations']
         runTime = ((operationDictionary['totalCookingTimeInMinutes']) + (operationDictionary['totalHandsOnTimeInMinutes']))*60
+##        raise_frame(f7)
+##        button()
         if podDetect(operationDictionary) == True:
             preview=threading.Thread(target=progress,args=(runTime,)).start()
+##            progress(runTime)
             startP=threading.Thread(target=startProcess,args=(operationDictionary["process"],))
 ##            isThreadAlive(startP)
             starting=raw_input('\ndo you want to start (y/n)')
@@ -473,27 +526,34 @@ def totalTimeToComplete(file):
 
     
 if __name__ == '__main__':
+##    progress(10)
+##    root.mainloop()
     print("Diagnostics Running")
     run=Diagnostics()
     run.cookingLid()
     run.ingredientRack()
-##    run.senLevel(oilSensor)
-##    run.senLevel(waterSensor)
+##    run.senLevel(oilSensor,minOilLevel)
+##    run.senLevel(waterSensor,minWaterLevel)
 ##    run.tempSense()
-    
-    if run.diag()== True:
-        print("diagnostics Done")
-        while True:
-            selection=raw_input("Do you want to start(y/n): ")
-            if selection=="y":
-               from gui import*
-            elif selection=="n":
-                print("skipped")
-            else:
-                print("choose right option")
-                continue
-    else:
-        print("something went wrong")
+    while True:
+        if run.diag()== True:
+            print("diagnostics Done")
+            while True:
+                selection=raw_input("Do you want to start(y/n): ")
+                if selection=="y":
+                    raise_frame(f1)
+                    root.mainloop()
+                elif selection=="n":
+                    print("skipped")
+                    sys.exit(0)
+                else:
+                    print("choose right option")
+                    continue
+        else:
+            print("something went wrong")
+            print("put ingredient and Try again")
+            time.sleep(2)
+            continue
 
 
 
