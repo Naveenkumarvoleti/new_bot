@@ -8,44 +8,46 @@ i2cAddr = 0x20
 wiringpi.wiringPiSetup()
 wiringpi.mcp23017Setup(pinBase,i2cAddr)
 
-TRIG = 78
-retries=10
-data=[]
+wiringpi.pinMode(78,1)
+wiringpi.pinMode(79,0)
+wiringpi.digitalWrite(79,0)
 
-def ultrasonic(ECHO):
-    wiringpi.pinMode(TRIG,1)
-    wiringpi.pinMode(ECHO,0)
-    wiringpi.digitalWrite(TRIG, 1)
-    time.sleep(0.1)
-    wiringpi.digitalWrite(TRIG, 0)
-    
-    while wiringpi.digitalRead(ECHO)==0:
-      pulse_start = time.time()
-      
-    while wiringpi.digitalRead(ECHO)==1:
-      pulse_end = time.time()
+GPIO_TRIGGER = 78
+GPIO_ECHO    = 79
 
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 17150
-    distance = round(distance, 2)
-    
-    if not distance==0:
-        print ("Level: %s cm" %(distance))
-        return distance
-    else:
-        print("sensor failed")
+def measure():
+  # This function measures a distance
+  stop = time.time()
+  wiringpi.digitalWrite(GPIO_TRIGGER, 1)
+  time.sleep(0.00001)
+  wiringpi.digitalWrite(GPIO_TRIGGER, 0)
+  start = time.time()
 
-def errorfinder(data):
-    if len(data)==retries:
-        reading=reduce(lambda x,y: x+y,data)/len(data)
-        if not reading < 0 or not reading > 10:
-            return 0
-        else:
-            return 1
-    else:
-        pass
-    print(distance)
-    
+  while wiringpi.digitalRead(GPIO_ECHO)==0:
+    start = time.time()
+
+  while wiringpi.digitalRead(GPIO_ECHO)==1:
+    stop = time.time()
+
+  elapsed = stop-start
+  distance = elapsed*17150
+  distance=round(distance,2)
+  return distance
+
+
 while True:
-    ultrasonic(77)
+    print(measure())
     time.sleep(1)
+# Wrap main content in a try block so we can
+# catch the user pressing CTRL-C and run the
+# GPIO cleanup function. This will also prevent
+# the user seeing lots of unnecessary error
+# messages.
+#  distance = measure_average()
+   #  print "Ultrasonic Measurement"
+   #  print "Distance : %.1f" % distance
+   #  if distance < 8:
+   #      wiringpi.digitalWrite(121,1)
+   #  else:
+    #     wiringpi.digitalWrite(121,0)
+    # time.sleep(2)

@@ -20,7 +20,7 @@ from numpy import mean
 import os.path
 from loadcell import *
 from progressbar import progress
-from gui import progress
+##from gui import progress
 import induction_controll_relay
 from gui import *
 ##from gui import progress
@@ -208,11 +208,13 @@ def dispenseIngredient(mode,dispensePin,quantity):
         
     elif mode == 'ingredient':
         wiringpi.digitalWrite(flap1Pin,1)
+        time.sleep(0.5)
         wiringpi.digitalWrite(flap2Pin,1)
         print("dispencing ingredient\n")
         liftCookingLid(dispensePos)
         time.sleep(2)
         wiringpi.digitalWrite(flap2Pin,0)
+        time.sleep(0.5)
         wiringpi.digitalWrite(flap1Pin,0)
 ##        load(1,'tare')
 ##        while True:
@@ -483,7 +485,7 @@ def podDetect(Dict):
 # Read the recipe file
 def readRecipe(file,delay):
     time.sleep(delay)
-    progress(10)
+##    progress(10)
     with open(file) as f:
         recipeData =json.loads(f.read())
         try:
@@ -496,6 +498,7 @@ def readRecipe(file,delay):
         print(" ")
         global operations
         operations=operationDictionary['no_of_operations']
+        print(operationDictionary["human_readable_steps"])
         runTime = ((operationDictionary['totalCookingTimeInMinutes']) + (operationDictionary['totalHandsOnTimeInMinutes']))*60
 ##        raise_frame(f7)
 ##        button()
