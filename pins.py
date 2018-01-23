@@ -29,11 +29,13 @@ waterPin=66
 loadcellA=15
 loadcellB=18
 
-lidPin=73
-spicePin=74
-ingredientPin=75
-stirPin=76
-cleaningPin=77
+lidPin=73 #lid up and down
+spicePin=74 # spice rack rotation
+ingredientPin=75 #ingredientRack Rotation
+stirPin=76 # stirrer rotation
+cleaningPin=77 # suit cleanup
+flap1Pin=78
+flap2Pin= 78
 
 liftStop=26
 stepperSensor=19
@@ -65,10 +67,10 @@ closePos=200.0
 ##
 liftSpeed= config.get('main', 'liftSpeed')
 liftPos= config.get('main', 'liftPos')
-##closePos= config.get('main', 'closePos')
-##dispensePos= config.get('main', 'dispensePos')
-minOilLevel= config.get('main', 'minOilLevel')
-minWaterLevel = config.get('main', 'minWaterLevel')
+##closePos= int(config.get('main', 'closePos'))
+##dispensePos= int(config.get('main', 'dispensePos'))
+minOilLevel= int(config.get('main', 'minOilLevel'))
+minWaterLevel = int(config.get('main', 'minWaterLevel'))
 
 LARGE_FONT= config.get('font', 'LARGE_FONT')
 NORM_FONT = config.get('font', 'NORM_FONT')
@@ -76,10 +78,12 @@ SMALL_FONT = config.get('font', 'SMALL_FONT')
 
 for pin in out_pins:
     GPIO.setup(int(pin),GPIO.OUT)
+    GPIO.output(int(pin),False)
 for pin in in_pins:
     GPIO.setup(int(pin),GPIO.IN)
 for pin in outPinsWiringpi:
     wiringpi.pinMode(pin,1)
+    wiringpi.digitalWrite(pin,0)
     
 ##stirSpeed=0.006
 

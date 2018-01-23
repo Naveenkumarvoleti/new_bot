@@ -115,6 +115,6 @@ def detection(podlen,mode,pin,angle):
                     trigStatus=True
 ##                    print(podDict)
 ##            elif not len(ingredientPod)== 0:
-####                    del podDict[-1]
-####                    print(podDict)
+##                    del podDict[-1]
+##                    print(podDict)
 ##                    print("removed")
